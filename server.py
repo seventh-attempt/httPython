@@ -1,14 +1,9 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from http.cookies import SimpleCookie
+from cgi import FieldStorage
 from sys import argv
 from os import path, sep
 
-# TODO:
-#  fix:
-#   console cookies update only after second refresh, though in browser updates are visible right after changes applied
-#   make cookies visible in browser at /charge
-#  add:
-#   get cookies in post to allow/ban charge operation
 
 HOST = '127.0.0.1'
 PORT = 8001
@@ -27,14 +22,12 @@ class Handler(BaseHTTPRequestHandler):
 
     def _log_in(self):
         cookies = SimpleCookie()
-        cookies['auth'] = True
-        # cookies['auth']['expires'] = None
+        cookies['auth'] = 100
         self.send_header('Set-Cookie', cookies.output(header='', sep=''))
 
     def _log_out(self):
         cookies = SimpleCookie()
-        cookies['auth'] = False
-        # cookies['auth']['expires'] = None
+        cookies['auth'] = 0
         self.send_header('Set-Cookie', cookies.output(header='', sep=''))
 
     PAGES = {
@@ -57,15 +50,23 @@ class Handler(BaseHTTPRequestHandler):
         page = self.path[1:] + '.html'
         self._set_headers(page)
 
-        print(self.headers)
-
         if page not in self.PAGES.keys():
             page = 'error.html'
+
         with open(sep.join((path.dirname(__file__), 'templates', page)), "rb") as f:
             self.wfile.write(f.read())
 
     def do_POST(self):
-        self.do_GET()
+        self._set_headers()
+
+        cookies = SimpleCookie(self.headers.get('Cookie'))
+
+        if len(cookies) > 0 and int(cookies['auth'].value) > 0:
+            form = FieldStorage(fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD': 'POST'})
+            ans = f'Charged {form.getvalue("cake")}$'
+            self.wfile.write(ans.encode('UTF-8'))
+        else:
+            self.wfile.write('Can\'t charge, you need to authorise yourself'.encode('UTF-8'))
 
 
 server = HTTPServer((HOST, PORT), Handler)
