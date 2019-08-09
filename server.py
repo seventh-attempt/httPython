@@ -1,8 +1,9 @@
+from sys import argv
+from os import path, sep
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from http.cookies import SimpleCookie
 from cgi import FieldStorage
-from sys import argv
-from os import path, sep
 
 
 HOST = '127.0.0.1'
@@ -15,6 +16,9 @@ if len(argv) > 1:
 class Handler(BaseHTTPRequestHandler):
 
     def _charge(self):
+        pass
+
+    def _error(self):
         pass
 
     def _form(self):
@@ -32,14 +36,15 @@ class Handler(BaseHTTPRequestHandler):
 
     PAGES = {
         'charge.html': _charge,
+        'error.html': _error,
         'form.html': _form,
         'logIn.html': _log_in,
         'logOut.html': _log_out,
     }
 
-    def _set_headers(self, page=None):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/html')
+    def _set_headers(self, page=None, response_code=200, content_type='text/html'):
+        self.send_response(response_code)
+        self.send_header('Content-type', content_type)
 
         if page is not None:
             self.PAGES[page](self)
@@ -48,10 +53,11 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         page = self.path[1:] + '.html'
-        self._set_headers(page)
 
         if page not in self.PAGES.keys():
             page = 'error.html'
+
+        self._set_headers(page)
 
         with open(sep.join((path.dirname(__file__), 'templates', page)), "rb") as f:
             self.wfile.write(f.read())
@@ -69,11 +75,12 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write('Can\'t charge, you need to authorise yourself'.encode('UTF-8'))
 
 
-server = HTTPServer((HOST, PORT), Handler)
+if __name__ == '__main__':
+    server = HTTPServer((HOST, PORT), Handler)
 
-try:
-    print("Serving at {0}:{1}".format(HOST, PORT))
-    server.serve_forever()
-except KeyboardInterrupt:
-    print("\nKeyboard interrupt received, exiting.")
-    server.server_close()
+    try:
+        print("Serving at {0}:{1}".format(HOST, PORT))
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print("\nKeyboard interrupt received, exiting.")
+        server.server_close()
