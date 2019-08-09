@@ -35,12 +35,19 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Set-Cookie', cookies.output(header='', sep=''))
 
     PAGES = {
-        'charge.html': _charge,
         'error.html': _error,
-        'form.html': _form,
-        'logIn.html': _log_in,
-        'logOut.html': _log_out,
     }
+
+    if PORT == 8001:
+        PAGES.update({
+            'form.html': _form,
+        })
+    elif PORT == 8002:
+        PAGES.update({
+            'charge.html': _charge,
+            'logIn.html': _log_in,
+            'logOut.html': _log_out,
+        })
 
     def _set_headers(self, page=None, response_code=200, content_type='text/html'):
         self.send_response(response_code)
