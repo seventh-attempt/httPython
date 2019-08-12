@@ -6,6 +6,9 @@ from http.cookies import SimpleCookie
 from cgi import FieldStorage
 from urllib.parse import urlparse
 
+# TODO:
+#   add: handler for external js files
+
 
 HOST = '127.0.0.1'
 PORT = 8001
@@ -36,18 +39,18 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Set-Cookie', cookies.output(header='', sep=''))
 
     PAGES = {
-        'error.html': _error,
+        'error': _error,
     }
 
     if PORT == 8001:
         PAGES.update({
-            'form.html': _form,
+            'form': _form,
         })
     elif PORT == 8002:
         PAGES.update({
-            'charge.html': _charge,
-            'logIn.html': _log_in,
-            'logOut.html': _log_out,
+            'charge': _charge,
+            'logIn': _log_in,
+            'logOut': _log_out,
         })
 
     def _set_headers(self, page=None, response_code=200, content_type='text/html'):
@@ -60,14 +63,14 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        page = urlparse(self.path).path[1:] + '.html'
+        page = urlparse(self.path).path[1:]
 
         if page not in self.PAGES.keys():
-            page = 'error.html'
+            page = 'error'
 
         self._set_headers(page)
 
-        with open(sep.join((path.dirname(__file__), 'templates', page)), "rb") as f:
+        with open(sep.join((path.dirname(__file__), 'templates', '.'.join((page, 'html')))), "rb") as f:
             self.wfile.write(f.read())
 
     def do_POST(self):
