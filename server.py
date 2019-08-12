@@ -4,6 +4,7 @@ from os import path, sep
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from http.cookies import SimpleCookie
 from cgi import FieldStorage
+from urllib.parse import urlparse
 
 
 HOST = '127.0.0.1'
@@ -59,7 +60,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        page = self.path[1:] + '.html'
+        page = urlparse(self.path).path[1:] + '.html'
 
         if page not in self.PAGES.keys():
             page = 'error.html'
