@@ -1,13 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
+{% block title %}
     <title>Charge</title>
-</head>
+{% endblock %}
 
-<body>
-    Some answer
-</body>
-
-</html>
+{% block body %}
+    {{ output }}
+{% endblock %}

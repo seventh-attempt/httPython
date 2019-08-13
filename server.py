@@ -6,6 +6,8 @@ from http.cookies import SimpleCookie
 from cgi import FieldStorage
 from urllib.parse import urlparse
 
+from jinja2 import Environment, FileSystemLoader
+
 
 HOST = '127.0.0.1'
 PORT = 8001
@@ -15,6 +17,28 @@ if len(argv) > 1:
 
 
 class Handler(BaseHTTPRequestHandler):
+
+    def _get_cookies(self):
+        cookies = SimpleCookie(self.headers.get('Cookie'))
+        is_exist = False
+
+        try:
+            if int(cookies['auth'].value) > 0:
+                is_exist = True
+        except KeyError:
+            print('There is no entity with \'auth\' key')
+
+        return is_exist
+
+    def _get_template(self, page):
+        file_loader = FileSystemLoader(sep.join((path.dirname(path.abspath(__file__)), 'templates')))
+        env = Environment(loader=file_loader)
+        return env.get_template(page)
+
+    def _set_cookies(self, value):
+        cookies = SimpleCookie()
+        cookies['auth'] = value
+        self.send_header('Set-Cookie', cookies.output(header='', sep=''))
 
     def _charge(self):
         pass
@@ -60,6 +84,10 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+
+        if 'favicon.ico' in self.path:
+            return
+
         page = urlparse(self.path).path[1:] + '.html'
 
         if page not in self.PAGES.keys():
@@ -67,20 +95,27 @@ class Handler(BaseHTTPRequestHandler):
 
         self._set_headers(page)
 
-        with open(sep.join((path.dirname(__file__), 'templates', page)), "rb") as f:
-            self.wfile.write(f.read())
+        if self._get_cookies():
+            auth = '<form action="http://127.0.0.1:8002/logOut"><input type="submit" value="Log Out"></form>'
+        else:
+            auth = '<form action="http://127.0.0.1:8002/logIn"><input type="submit" value="Log In"></form>'
+
+        template = self._get_template(page)
+        output = template.render(auth=auth)
+        self.wfile.write(output.encode('UTF-8'))
 
     def do_POST(self):
         self._set_headers()
+        page = urlparse(self.path).path[1:] + '.html'
+        template = self._get_template(page)
 
-        cookies = SimpleCookie(self.headers.get('Cookie'))
-
-        if len(cookies) > 0 and int(cookies['auth'].value) > 0:
+        if self._get_cookies():
             form = FieldStorage(fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD': 'POST'})
-            ans = f'Charged {form.getvalue("cake")}$'
-            self.wfile.write(ans.encode('UTF-8'))
+            output = template.render(output=f'{form.getvalue("cake")}$ charged')
         else:
-            self.wfile.write('Can\'t charge, you need to authorise yourself'.encode('UTF-8'))
+            output = template.render(output='Can\'t charge, you need to authorise yourself')
+
+        self.wfile.write(output.encode('UTF-8'))
 
 
 if __name__ == '__main__':
