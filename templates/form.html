@@ -1,24 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
+{% block title %}
     <title>Form</title>
-</head>
+{% endblock %}
 
-<body>
-    <form action="/logIn">
-        <input type="submit" value="Log In">
-    </form>
-    <form action="/logOut">
-        <input type="submit" value="Log Out">
-    </form>
+{% block body %}
+    {{ auth }}
     <br>
     <form action="/charge" method='post'>
         How much do you want to invest <br>
-        <input type="number" required="required" name="cake"> <br>
+        <input type="number" required="required" name="cake" value="100"> <br>
         <input type="submit" value="POST">
     </form>
-</body>
-
-</html>
+{% endblock %}
