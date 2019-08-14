@@ -1,16 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
+{% block title %}
     <title>Log Out</title>
-</head>
+{% endblock %}
 
-<body>
-    Now you are unauthorised
-    <form action="http://127.0.0.1:8001/form">
-        <input type="submit" value="Back to form">
-    </form>
-</body>
+{% block body %}
+<!--    Now you are unauthorised-->
+<!--    <form action="http://127.0.0.1:8001/form">-->
+<!--        <input type="submit" value="Back to form">-->
+<!--    </form>-->
 
-</html>
+    <script>
+        window.onload = function(){
+            setTimeout(myFunction, 0)
+        };
+        function myFunction(){
+            location.replace("http://127.0.0.1:8001/form")
+        };
+        alert("Now you're logged out")
+
+    </script>
+{% endblock %}
