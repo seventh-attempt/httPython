@@ -1,13 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}
+{% block head %}
+    {{ super() }}
     <title>Form</title>
 {% endblock %}
 
 {% block body %}
     {{ auth }}
     <br>
-    <form name="charge" action="http://127.0.0.1:8002/charge" method='post'>
+    <form name=charge action="http://{{ host }}:{{ port_2 }}/charge" method='post'>
         How much do you want to invest <br>
         <input type="number" required="required" name="cake" value="100"> <br>
         <input type="submit" value="POST">
@@ -17,7 +18,6 @@
         window.onload = function() {
             setTimeout(autoSend, 10)
         };
-
         function autoSend(){
             let
                 oldForm = document.forms.charge,
