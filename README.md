@@ -8,3 +8,6 @@ To run the server use `python3 path/server.py portnumber` command. `portnumber` 
 
 #### About
 Application has 5 pages: ___charge___, ___error___, ___form___, ___logIn___ and ___logOut___. ___logIn___ and ___logOut___ are responsible for authorisation processes, ___charge___ prints success message in case user was authorised, otherwise warning message will be shown. From ___form___ you can go to this pages by clicking the corresponding buttons.
+
+#### What's new
+Fear not, my dear user, now your money are safe. Additional protection layer prevents attempts to use your authentication data without your acknowledgement.

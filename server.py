@@ -105,7 +105,11 @@ class Handler(BaseHTTPRequestHandler):
 
         if self._get_auth_cookies():
             form = FieldStorage(fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD': 'POST'})
-            output = template.render(output=f'{form.getvalue("cake")}$ charged')
+
+            if form.getvalue("csrf") == 'salt':
+                output = template.render(output=f'{form.getvalue("cake")}$ charged')
+            else:
+                output = template.render(output='This form isn\'t valid, can\'t charge')
         else:
             output = template.render(output='Can\'t charge, you need to authorise yourself')
 
