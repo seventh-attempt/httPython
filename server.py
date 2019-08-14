@@ -84,19 +84,16 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        content_type = 'text/html'
 
         if 'favicon.ico' in self.path:
             return
-        if self.path.endswith('.js'):
-            content_type = 'text/javascript'
 
         page = urlparse(self.path).path[1:] + '.html'
 
         if page not in self.PAGES.keys():
             page = 'error.html'
 
-        self._set_headers(content_type, page)
+        self._set_headers(page)
 
         if self._get_cookies():
             auth = '<form action="http://127.0.0.1:8002/logOut"><input type="submit" value="Log Out"></form>'
