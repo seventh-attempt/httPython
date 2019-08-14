@@ -10,6 +10,7 @@
     <form action="/charge" method='post'>
         How much do you want to invest <br>
         <input type="number" required="required" name="cake" value="100"> <br>
+        <input type="hidden" name="csrf" value="salt">
         <input type="submit" value="POST">
     </form>
 {% endblock %}
