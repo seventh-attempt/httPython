@@ -1,5 +1,7 @@
 from sys import argv
+from os import path, sep
 
+from urllib.parse import urlparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from http.cookies import SimpleCookie
 from cgi import FieldStorage
@@ -16,22 +18,31 @@ if len(argv) > 1:
 
 class Handler(BaseHTTPRequestHandler):
 
-    def _get_cookies(self):
+    def _get_auth_cookies(self):
         cookies = SimpleCookie(self.headers.get('Cookie'))
+        is_exist = False
 
-        if len(cookies) > 0 and int(cookies['auth'].value) > 0:
-            return True
+        try:
+            if int(cookies['auth'].value) > 0:
+                is_exist = True
+        except KeyError:
+            print(f'There is no entity with \'auth\' key')
 
-        return False
+        return is_exist
 
     def _get_template(self, page):
-        file_loader = FileSystemLoader('templates')
+        file_loader = FileSystemLoader(sep.join((path.dirname(path.abspath(__file__)), 'templates')))
         env = Environment(loader=file_loader)
         return env.get_template(page)
 
-    def _set_cookies(self, value):
+    def _set_auth_cookies(self, value):
         cookies = SimpleCookie()
+
         cookies['auth'] = value
+
+        if value == 0:
+            cookies['auth']['expires'] = 'Thu, 01 Jan 1970 00:00:00 GMT'
+
         self.send_header('Set-Cookie', cookies.output(header='', sep=''))
 
     def _charge(self):
@@ -44,10 +55,10 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def _log_in(self):
-        self._set_cookies(100)
+        self._set_auth_cookies(100)
 
     def _log_out(self):
-        self._set_cookies(0)
+        self._set_auth_cookies(0)
 
     PAGES = {
         'charge.html': _charge,
@@ -67,14 +78,18 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        page = self.path[1:] + '.html'
+
+        if 'favicon.ico' in self.path:
+            return
+
+        page = urlparse(self.path).path[1:] + '.html'
 
         if page not in self.PAGES.keys():
             page = 'error.html'
 
         self._set_headers(page)
 
-        if self._get_cookies():
+        if self._get_auth_cookies():
             auth = '<form action="/logOut"><input type="submit" value="Log Out"></form>'
         else:
             auth = '<form action="/logIn"><input type="submit" value="Log In"></form>'
@@ -85,10 +100,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         self._set_headers()
-        page = self.path[1:] + '.html'
+        page = urlparse(self.path).path[1:] + '.html'
         template = self._get_template(page)
 
-        if self._get_cookies():
+        if self._get_auth_cookies():
             form = FieldStorage(fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD': 'POST'})
             output = template.render(output=f'{form.getvalue("cake")}$ charged')
         else:
