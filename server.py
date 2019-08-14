@@ -1,6 +1,7 @@
 from sys import argv
 from os import path, sep
 
+from urllib.parse import urlparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from http.cookies import SimpleCookie
 from cgi import FieldStorage
@@ -18,7 +19,7 @@ if len(argv) > 1:
 
 class Handler(BaseHTTPRequestHandler):
 
-    def _get_cookies(self):
+    def _get_auth_cookies(self):
         cookies = SimpleCookie(self.headers.get('Cookie'))
         is_exist = False
 
@@ -30,92 +31,93 @@ class Handler(BaseHTTPRequestHandler):
 
         return is_exist
 
-    def _get_template(self, page):
+    def _set_template(self, page, **kwargs):
         file_loader = FileSystemLoader(sep.join((path.dirname(path.abspath(__file__)), 'templates')))
         env = Environment(loader=file_loader)
-        return env.get_template(page)
+        template = env.get_template(page)
+        output = template.render(kwargs)
+        self.wfile.write(output.encode('UTF-8'))
 
-    def _set_cookies(self, value):
+    def _set_auth_cookies(self, value):
         cookies = SimpleCookie()
+
         cookies['auth'] = value
+
+        if value == 0:
+            cookies['auth']['expires'] = 'Thu, 01 Jan 1970 00:00:00 GMT'
+
         self.send_header('Set-Cookie', cookies.output(header='', sep=''))
 
-    def _charge(self):
+    def _charge_handler(self):
         pass
 
-    def _error(self):
+    def _error_handler(self):
         pass
 
-    def _form(self):
+    def _form_handler(self):
         pass
 
-    def _log_in(self):
-        cookies = SimpleCookie()
-        cookies['auth'] = 100
-        self.send_header('Set-Cookie', cookies.output(header='', sep=''))
+    def _log_in_handler(self):
+        self._set_auth_cookies(100)
 
-    def _log_out(self):
-        cookies = SimpleCookie()
-        cookies['auth'] = 0
-        self.send_header('Set-Cookie', cookies.output(header='', sep=''))
+    def _log_out_handler(self):
+        self._set_auth_cookies(0)
 
-    PAGES = {
-        'error.html': _error,
+    HANDLERS = {
+        'error.html': _error_handler,
     }
 
     if PORT == 8001:
-        PAGES.update({
-            'form.html': _form,
+        HANDLERS.update({
+            'form.html': _form_handler,
         })
     elif PORT == 8002:
-        PAGES.update({
-            'charge.html': _charge,
-            'logIn.html': _log_in,
-            'logOut.html': _log_out,
+        HANDLERS.update({
+            'charge.html': _charge_handler,
+            'logIn.html': _log_in_handler,
+            'logOut.html': _log_out_handler,
         })
 
-    def _set_headers(self, page=None, response_code=200, content_type='text/html'):
+    def _set_headers(self, page=None, content_type='text/html'):
+        response_code = 200
+
+        if page == 'error.html':
+            response_code = 404
+
         self.send_response(response_code)
         self.send_header('Content-type', content_type)
 
         if page is not None:
-            self.PAGES[page](self)
+            self.HANDLERS[page](self)
 
         self.end_headers()
 
     def do_GET(self):
-
-        if 'favicon.ico' in self.path:
-            return
-
         page = urlparse(self.path).path[1:] + '.html'
 
-        if page not in self.PAGES.keys():
+        if 'favicon.ico' in self.path or page not in self.HANDLERS.keys():
             page = 'error.html'
 
         self._set_headers(page)
 
-        if self._get_cookies():
+        if self._get_auth_cookies():
             auth = '<form action="http://127.0.0.1:8002/logOut"><input type="submit" value="Log Out"></form>'
         else:
             auth = '<form action="http://127.0.0.1:8002/logIn"><input type="submit" value="Log In"></form>'
 
-        template = self._get_template(page)
-        output = template.render(auth=auth)
-        self.wfile.write(output.encode('UTF-8'))
+        self._set_template(page, auth=auth)
 
     def do_POST(self):
         self._set_headers()
         page = urlparse(self.path).path[1:] + '.html'
-        template = self._get_template(page)
 
-        if self._get_cookies():
+        if self._get_auth_cookies():
             form = FieldStorage(fp=self.rfile, headers=self.headers, environ={'REQUEST_METHOD': 'POST'})
-            output = template.render(output=f'{form.getvalue("cake")}$ charged')
+            output = f'{form.getvalue("cake")}$ charged'
         else:
-            output = template.render(output='Can\'t charge, you need to authorise yourself')
+            output = 'Can\'t charge, you need to authorise yourself'
 
-        self.wfile.write(output.encode('UTF-8'))
+        self._set_template(page, output=output)
 
 
 if __name__ == '__main__':
