@@ -30,11 +30,11 @@ class Handler(BaseHTTPRequestHandler):
 
         return is_exist
 
-    def _set_template(self, page, auth=None, output=None):
+    def _set_template(self, page, **kwargs):
         file_loader = FileSystemLoader(sep.join((path.dirname(path.abspath(__file__)), 'templates')))
         env = Environment(loader=file_loader)
         template = env.get_template(page)
-        output = template.render(auth=auth, output=output)
+        output = template.render(kwargs)
         self.wfile.write(output.encode('UTF-8'))
 
     def _set_auth_cookies(self, value):
@@ -70,7 +70,12 @@ class Handler(BaseHTTPRequestHandler):
         'logOut.html': _log_out_handler,
     }
 
-    def _set_headers(self, page=None, response_code=200, content_type='text/html'):
+    def _set_headers(self, page=None, content_type='text/html'):
+        response_code = 200
+
+        if page == 'error.html':
+            response_code = 404
+
         self.send_response(response_code)
         self.send_header('Content-type', content_type)
 
@@ -80,17 +85,12 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-
-        if 'favicon.ico' in self.path:
-            return
-
         page = urlparse(self.path).path[1:] + '.html'
 
-        if page in self.HANDLERS.keys():
-            self._set_headers(page)
-        else:
+        if 'favicon.ico' in self.path or page not in self.HANDLERS.keys():
             page = 'error.html'
-            self._set_headers(page, 404)
+
+        self._set_headers(page)
 
         if self._get_auth_cookies():
             auth = '<form action="/logOut"><input type="submit" value="Log Out"></form>'
