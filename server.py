@@ -99,13 +99,14 @@ class Handler(BaseHTTPRequestHandler):
             page = 'error.html'
 
         self._set_headers(page)
+        port_1, port_2 = 8001, 8002
 
         if self._get_auth_cookies():
-            auth = '<form action="http://127.0.0.1:8002/logOut"><input type="submit" value="Log Out"></form>'
+            auth = f'<form action="http://{ HOST }:{ port_2 }/logOut"><input type="submit" value="Log Out"></form>'
         else:
-            auth = '<form action="http://127.0.0.1:8002/logIn"><input type="submit" value="Log In"></form>'
+            auth = f'<form action="http://{ HOST }:{ port_2 }/logIn"><input type="submit" value="Log In"></form>'
 
-        self._set_template(page, auth=auth)
+        self._set_template(page, auth=auth, host=HOST, port_1=port_1, port_2=port_2)
 
     def do_POST(self):
         self._set_headers()

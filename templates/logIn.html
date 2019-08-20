@@ -7,7 +7,7 @@
 
 {% block body %}
     OK
-    <form action="http://127.0.0.1:8001/form">
+    <form action="http://{{ host }}:{{ port_1 }}/form">
         <input type="submit" value="Back to form">
     </form>
 {% endblock %}

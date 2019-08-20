@@ -8,7 +8,7 @@
 {% block body %}
     {{ auth }}
     <br>
-    <form action="http://127.0.0.1:8002/charge" method='post'>
+    <form action="http://{{ host }}:{{ port_2 }}/charge" method='post'>
         How much do you want to invest <br>
         <input type="number" required="required" name="cake" value="100"> <br>
         <input type="submit" value="POST">
